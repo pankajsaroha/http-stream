@@ -5,18 +5,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stream.http.HttpStream.model.Employee;
 import com.stream.http.HttpStream.repository.EmployeeRepository;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
+@Slf4j
 public class EmployeeService {
 
     @Autowired
@@ -31,7 +35,8 @@ public class EmployeeService {
         return ResponseEntity.ok("Data generated successfully");
     }
 
-    public StreamingResponseBody getEmployees (final HttpServletResponse response) {
+    @Async
+    public CompletableFuture<StreamingResponseBody> getEmployees (final HttpServletResponse response) {
 
         final int pageSize = 10;
         final Pageable[] pageable = {PageRequest.of(0, pageSize)};
@@ -55,7 +60,7 @@ public class EmployeeService {
                 out.flush();
                 firstPage = false;
                 pageable[0] = PageRequest.of(++page, pageSize);
-
+                log.info("Current Thread: " + Thread.currentThread().getName());
                 //Added wait to show the streaming as data stored is not huge
                 try {
                     Thread.sleep(500);
@@ -64,7 +69,7 @@ public class EmployeeService {
                 }
             }
         };
-        return stream;
+        return CompletableFuture.completedFuture(stream);
     }
 
     private String convertDataToJson (List<Employee> data) throws JsonProcessingException {

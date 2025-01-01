@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.util.concurrent.ExecutionException;
+
 @RestController
 @RequestMapping("/http-stream")
 public class HttpStreamController {
@@ -17,7 +19,7 @@ public class HttpStreamController {
     private EmployeeService employeeService;
 
     @GetMapping("/streamed-data")
-    public ResponseEntity<StreamingResponseBody> getEmployeesData (final HttpServletResponse response) {
-        return ResponseEntity.ok(employeeService.getEmployees(response));
+    public ResponseEntity<StreamingResponseBody> getEmployeesData (final HttpServletResponse response) throws ExecutionException, InterruptedException {
+        return ResponseEntity.ok(employeeService.getEmployees(response).get());
     }
 }
